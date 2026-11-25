@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+{% block title %}Profile – validated{% endblock %}
+
+{# err(name): prints the server message for one field, or nothing #}
+{% macro err(name) -%}
+  {% if errors.get(name) %}<span class="error">{{ errors[name] }}</span>{% endif %}
+{%- endmacro %}
+{# bad(name): adds the CSS class "invalid" to a field that has an error #}
+{% macro bad(name) -%}{% if errors.get(name) %} invalid{% endif %}{%- endmacro %}
+
+{% block content %}
+<h1>Engineering Student Profile <span class="badge ok">validated on the server</span></h1>
+<div class="summary" role="alert"{% if not errors %} hidden{% endif %}>
+  <strong>{{ errors | length }} problem(s) found.</strong> Correct the fields in red and submit again.
+  <ul>
+    {% for name, message in errors.items() %}
+      <li><a href="#{{ name }}">{{ message }}</a></li>
+    {% endfor %}
+  </ul>
+</div>
+<p class="lead">Add <code>?nocheck=1</code> to the URL to switch off the browser checks and test the server alone.</p>
+
+<form class="profile" method="post" action="/profile-validated{% if request.args.get('nocheck') %}?nocheck=1{% endif %}" {% if request.args.get('nocheck') %}novalidate{% endif %}>
+  <fieldset>
+    <legend>Identity</legend>
+    <label class="{{ bad('student_id') }}" data-field="student_id">Student ID
+      <input id="student_id" name="student_id" required pattern="\d{9}" placeholder="202312345" value="{{ values.get('student_id', '') }}">
+      {{ err('student_id') }}</label>
+    <label class="{{ bad('fullname') }}" data-field="fullname">Full name
+      <input id="fullname" name="fullname" required minlength="3" maxlength="60" value="{{ values.get('fullname', '') }}">
+      {{ err('fullname') }}</label>
+    <label class="{{ bad('email') }}" data-field="email">University e-mail
+      <input type="email" id="email" name="email" required placeholder="name@usek.edu.lb" value="{{ values.get('email', '') }}">
+      {{ err('email') }}</label>
+    <label class="{{ bad('phone') }}" data-field="phone">Phone
+      <input type="tel" id="phone" name="phone" placeholder="+961 3 123 456" value="{{ values.get('phone', '') }}">
+      {{ err('phone') }}</label>
+    <label class="{{ bad('birthdate') }}" data-field="birthdate">Birth date
+      <input type="{{ 'text' if errors.get('birthdate') else 'date' }}" id="birthdate" name="birthdate" value="{{ values.get('birthdate', '') }}">
+      {{ err('birthdate') }}</label>
+  </fieldset>
+  <fieldset>
+    <legend>Studies</legend>
+    {# TODO 5 (Task 5, in class): for fullname, email, major and gpa, copy what was done for student_id:
+         class="{{ bad('name') }}" on the label, value="{{ values.get('name', '') }}" and {{ err('name') }}.
+       For the <select>: add selected when values.get('major') == key.
+       At home: do the same for every other field (checked / selected for radios, checkboxes, multi-select). #}
+    <label class="{{ bad('major') }}" data-field="major">Major
+      <select id="major" name="major" required>
+        <option value="">– choose –</option>
+        {% for key, label in majors.items() %}
+          <option value="{{ key }}" {% if values.get('major') == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      {{ err('major') }}</label>
+    <label class="{{ bad('gpa') }}" data-field="gpa">GPA (40–100)
+      <input type="{{ 'text' if errors.get('gpa') else 'number' }}" id="gpa" name="gpa" required min="40" max="100" step="0.01" value="{{ values.get('gpa', '') }}">
+      {{ err('gpa') }}</label>
+    <label class="{{ bad('credits') }}" data-field="credits">Credits (0–148)
+      <input type="{{ 'text' if errors.get('credits') else 'number' }}" id="credits" name="credits" required min="0" max="148" value="{{ values.get('credits', '') }}">
+      {{ err('credits') }}</label>
+    <div class="group{{ bad('graduation') }}" data-field="graduation">Graduation term
+      {% for key, label in terms.items() %}
+        <label class="inline"><input type="radio" name="graduation" value="{{ key }}" required id="{{ 'graduation' if loop.first else 'graduation-' ~ key }}" {% if values.get('graduation') == key %}checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+      {{ err('graduation') }}</div>
+    <div class="group{{ bad('skills') }}" data-field="skills">Skills
+      {% for key, label in skills.items() %}
+        <label class="inline"><input type="checkbox" name="skills" value="{{ key }}" id="{{ 'skills' if loop.first else 'skills-' ~ key }}" {% if key in values.get('skills', []) %}checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+      {{ err('skills') }}</div>
+    <label class="{{ bad('software') }}" data-field="software">Software
+      <select id="software" name="software" multiple size="3">
+        {% for key, label in software.items() %}
+          <option value="{{ key }}" {% if key in values.get('software', []) %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      {{ err('software') }}</label>
+  </fieldset>
+  <fieldset>
+    <legend>Project</legend>
+    <label class="{{ bad('project_title') }}" data-field="project_title">Project title
+      <input id="project_title" name="project_title" required maxlength="120" value="{{ values.get('project_title', '') }}">
+      {{ err('project_title') }}</label>
+    <label class="{{ bad('description') }}" data-field="description">Description
+      <textarea id="description" name="description" maxlength="1000" rows="3">{{ values.get('description', '') }}</textarea>
+      {{ err('description') }}</label>
+    <label class="{{ bad('team_size') }}" data-field="team_size">Team size (1–4)
+      <input type="{{ 'text' if errors.get('team_size') else 'number' }}" id="team_size" name="team_size" required min="1" max="4" value="{{ values.get('team_size', '') }}">
+      {{ err('team_size') }}</label>
+    <label class="{{ bad('project_color') }}" data-field="project_color">Project colour
+      <input type="{{ 'text' if errors.get('project_color') else 'color' }}" id="project_color" name="project_color" value="{{ values.get('project_color', '#336699') }}">
+      {{ err('project_color') }}</label>
+    <label class="{{ bad('meeting_time') }}" data-field="meeting_time">Weekly meeting (08:00–18:00)
+      <input type="{{ 'text' if errors.get('meeting_time') else 'time' }}" id="meeting_time" name="meeting_time" min="08:00" max="18:00" value="{{ values.get('meeting_time', '') }}">
+      {{ err('meeting_time') }}</label>
+    <label class="inline{{ bad('confirmation') }}" data-field="confirmation"><input type="checkbox" id="confirmation" name="confirmation" value="yes" required {% if values.get('confirmation') %}checked{% endif %}> I confirm that this information is correct.
+      {{ err('confirmation') }}</label>
+  </fieldset>
+  <button type="submit">Submit profile</button>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='precheck.js') }}"></script>
+{% endblock %}
